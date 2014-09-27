@@ -1,0 +1,33 @@
+{
+  "name": "drachtio-client",
+  "version": "0.0.1",
+  "description": "low-level message exchange module for dracht.io",
+  "main": "index.js",
+  "scripts": {
+    "test": "make test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/davehorton/drachtio-client.git"
+  },
+  "author": "Dave Horton",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/davehorton/drachtio-client/issues"
+  },
+  "homepage": "https://github.com/davehorton/drachtio-client",
+  "dependencies": {
+    "debug": "^1.0.4",
+    "delegates": "0.0.3",
+    "drachtio-sip": "*",
+    "merge": "^1.1.3",
+    "node-uuid": "^1.4.1",
+    "only": "0.0.2",
+    "sip-status": "^0.0.1"
+  },
+  "devDependencies": {
+    "jsdoc": ">=3.3.0-*",
+    "mocha": "~1.15.1",
+    "should": "~2.1.1"
+  }
+}
