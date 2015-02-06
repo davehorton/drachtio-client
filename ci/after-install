@@ -1,0 +1,4 @@
+echo "/tmp/drachtio_local_log_00000.log"
+cat /tmp/drachtio_local_log_00000.log
+echo "/tmp/drachtio_remote_log_00000.log"
+cat /tmp/drachtio_remote_log_00000.log
