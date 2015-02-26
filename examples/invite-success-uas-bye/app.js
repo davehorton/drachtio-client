@@ -7,7 +7,12 @@ module.exports = function( config ) {
 
 	function handler(req,res) {
 		if( req.method === 'INVITE') {
-			res.send(200, { body: config.sdp}, function(err, msg){
+			res.send(200, { 
+				body: config.sdp,
+				headers: {
+					'Max-Forwards': req.get('Max-Forwards')
+				}
+			}, function(err, msg){
 				dialogId = res.stackDialogId ;
 			}) ;
 		}
