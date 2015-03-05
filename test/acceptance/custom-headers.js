@@ -36,7 +36,7 @@ describe('custom headers', function() {
             should.not.exist(err) ;
             req.on('response', function(res){
                 res.should.have.property('status',200); 
-                should(res.get('X-Custom').value).eql('drachtio rocks!') ;
+                res.get('X-Custom').should.eql('drachtio rocks!') ;
                 localAgent.idle.should.be.true ;
                 remoteAgent.idle.should.be.true ;
                 done() ;
@@ -52,7 +52,7 @@ describe('custom headers', function() {
             should.not.exist(err) ;
             req.on('response', function(res){
                 res.should.have.property('status',200); 
-                should(res.get('Subject').value).eql('pure awesomeness') ;
+                res.get('Subject').should.eql('pure awesomeness') ;
                 localAgent.idle.should.be.true ;
                 remoteAgent.idle.should.be.true ;
                 done() ;

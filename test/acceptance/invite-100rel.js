@@ -50,8 +50,7 @@ describe('invite with reliable provisional responses', function() {
                 //validate response and send prack to 183 and ack to 200 OK
                 //
                 if( res.status > 100 && res.status < 200 ) {
-                    var require = res.get('Require') ;
-                    require.should.have.property('value','100rel') ;
+                    res.get('Require').should.eql('100rel') ;
                     ack() ;
                 }
                 if( res.status >= 200 ) {

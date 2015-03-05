@@ -1,22 +1,34 @@
 var Agent = require('../..').Agent ;
 var fs = require('fs') ;
+var debug = require('debug')('drachtio-client:invite-success-uas-bye') ;
 
 module.exports = function( config ) {
 
+	debug('config: ', config) ;
+
 	var dialogId ;
+
+	var count = 0 ;
+	var config
 
 	function handler(req,res) {
 		if( req.method === 'INVITE') {
-			res.send(200, { 
-				body: config.sdp,
-				headers: {
-					'Max-Forwards': req.get('Max-Forwards')
-				}
-			}, function(err, msg){
-				dialogId = res.stackDialogId ;
-			}) ;
+			if( 0 === count++ && config.allowCancel ) {
+				res.send(180) ;
+			}
+			else {
+				debug('sending INVITE, count %d, config: ', count, config.allowCancel); 
+				res.send(200, { 
+					body: config.sdp,
+					headers: {
+						'Max-Forwards': req.get('Max-Forwards')
+					}
+				}, function(err, msg){
+					dialogId = res.stackDialogId ;
+				}) ;				
+			}
 		}
-		if( req.method === 'ACK') {
+		else if( req.method === 'ACK') {
 			setTimeout( function() {
 				agent.request({
 					method: 'BYE',
@@ -24,6 +36,7 @@ module.exports = function( config ) {
 				}) ;			
 			}, 1) ;
 		}
+
 	} 
 
 	var agent = new Agent(handler) ;

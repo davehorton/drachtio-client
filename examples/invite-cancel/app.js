@@ -9,7 +9,7 @@ module.exports = function( config ) {
 			res.send(180) ;
 			setTimeout( function(){
 				assert(false, 'expected to receive a CANCEL request') ;
-			}, 5000) ;
+			}, 10000) ;
 		}
 		else if( req.msg.method === 'CANCEL') {
 			res.send(200) ;

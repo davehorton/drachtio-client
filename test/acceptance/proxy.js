@@ -14,7 +14,7 @@ var noop = function(req,res){} ;
 var cfg = {} ;
 
 describe('proxy', function() {
-    this.timeout(3000) ;
+    this.timeout(6000) ;
 
     before(function(done){
         cfg = require('./fixtures/remoteConfig') ;
@@ -50,8 +50,8 @@ describe('proxy', function() {
             should.not.exist(err) ;
             req.on('response', function(res){
                 res.should.have.property('status',483); 
-                localAgent.idle.should.be.true ;
-                remoteAgent.idle.should.be.true ;
+                //localAgent.idle.should.be.true ;
+                //remoteAgent.idle.should.be.true ;
                 done() ;
             }) ;
         }) ;
@@ -96,13 +96,14 @@ describe('proxy', function() {
                     should.not.exist(err) ;
                     req.on('response', function(res, ack){
                         res.should.have.property('status',200); 
-                        should(res.get('Max-Forwards').value).eql('10') ;
+                        res.get('Max-Forwards').should.eql('10') ;
                         ack() ;
                     }) ;
                 }) ;            
             }) ;
         }) ;
     }) ;    
+
 
     it('should add Record-Route header when stateful', function(done) {
         remoteAgent.disconnect() ;
@@ -199,7 +200,6 @@ describe('proxy', function() {
             }) ;
         }) ;
     }) ;    
-
     it('should handle PRACK during call setup when 100rel required', function(done) {
         remoteAgent.disconnect() ;
         remoteAgent2.disconnect() ;
@@ -226,7 +226,7 @@ describe('proxy', function() {
                     req.on('response', function(res, ack){
                         if( res.status > 100 && res.status < 200 ) {
                             var require = res.get('Require') ;
-                            require.should.have.property('value','100rel') ;
+                            require.should.eql('100rel') ;
                             ack() ;
                         }
                         if( res.status >= 200 ) {
@@ -255,4 +255,215 @@ describe('proxy', function() {
             }) ;
         }) ;
     }) ;    
+    it('should not follow redirect responses by default', function(done) {
+        remoteAgent.disconnect() ;
+        remoteAgent2.disconnect() ;
+        var mockedConfig = merge( {
+            proxyTarget: cfg.remote_uri2,
+            proxyType: 'stateless'
+        }, cfg) ;
+        remoteAgent = require('../../examples/proxy/app')(mockedConfig) ;
+        remoteAgent.on('connect', function() {
+
+            var mockedConfig = merge({contact: 'sip:1234@127.0.0.1:5062'}, require('./fixtures/remoteConfig2')) ;
+            remoteAgent2 = require('../../examples/invite-redirect-uas/app')(mockedConfig) ;
+            remoteAgent2.on('connect', function() {
+
+                localAgent.request({
+                    uri: config.request_uri,
+                    method: 'INVITE',
+                    body: config.sdp
+                }, function( err, req ) {
+                    should.not.exist(err) ;
+                    req.on('response', function(res, ack){
+                        res.should.have.property('status',302); 
+                        ack() ;
+                        done() ;
+                    }) ;
+                }) ;            
+            }) ;
+        }) ;
+    }) ;    
+    it('should follow redirect responses when configured to', function(done) {
+        remoteAgent.disconnect() ;
+        remoteAgent2.disconnect() ;
+        var mockedConfig = merge( {
+            proxyTarget: cfg.remote_uri2,
+            proxyType: 'stateless',
+            followRedirects: true
+        }, cfg) ;
+        remoteAgent = require('../../examples/proxy/app')(mockedConfig) ;
+        remoteAgent.on('connect', function() {
+
+            var mockedConfig = merge({contact: '<sip:1234@127.0.0.1:5062;dtg=TG_A>'}, require('./fixtures/remoteConfig2')) ;
+            remoteAgent2 = require('../../examples/invite-redirect-uas/app')(mockedConfig) ;
+            remoteAgent2.on('connect', function() {
+
+                //
+                //install a handler for the BYE request
+                //
+                localAgent.set('handler', function( req, res){
+                    req.method.should.eql('BYE') ;
+                    res.send(200, function(err, bye){
+                        should.not.exist(err) ;
+                        localAgent.idle.should.be.true; 
+                        setTimeout(function(){
+                            remoteAgent.idle.should.be.true; 
+                            done() ;
+                        }, 50) ;
+                    }) ;
+                }) ;
+
+                localAgent.request({
+                    uri: config.request_uri,
+                    method: 'INVITE',
+                    body: config.sdp
+                }, function( err, req ) {
+                    should.not.exist(err) ;
+                    req.on('response', function(res, ack){
+                        if( res.status >= 200 ) {
+                            res.should.have.property('status',200); 
+                            ack() ;
+                        }
+                    }) ;
+                }) ;            
+            }) ;
+        }) ;
+    }) ;    
+    it('should support a provisional timeout in seconds', function(done) {
+        remoteAgent.disconnect() ;
+        remoteAgent2.disconnect() ;
+        var mockedConfig = merge( {
+            proxyTarget: ['sip:nobody@127.0.0.1:6060',cfg.remote_uri2],
+            proxyType: 'stateless',
+            provisionalTimeout: '1s'
+        }, cfg) ;
+        remoteAgent = require('../../examples/proxy/app')(mockedConfig) ;
+        remoteAgent.on('connect', function() {
+
+            var mockedConfig = require('./fixtures/remoteConfig2') ;
+            remoteAgent2 = require('../../examples/invite-success-uas-bye/app')(mockedConfig) ;
+            remoteAgent2.on('connect', function() {
+
+                //
+                //install a handler for the BYE request
+                //
+                localAgent.set('handler', function( req, res){
+                    req.method.should.eql('BYE') ;
+                    res.send(200, function(err, bye){
+                        should.not.exist(err) ;
+                        localAgent.idle.should.be.true; 
+                        setTimeout(function(){
+                            remoteAgent.idle.should.be.true; 
+                            done() ;
+                        }, 50) ;
+                    }) ;
+                }) ;
+
+                localAgent.request({
+                    uri: config.request_uri,
+                    method: 'INVITE',
+                    body: config.sdp
+                }, function( err, req ) {
+                    should.not.exist(err) ;
+                    req.on('response', function(res, ack){
+                        res.should.have.property('status',200); 
+                        ack() ;
+                    }) ;
+                }) ;            
+            }) ;
+        }) ;
+    }) ;    
+    it('should support a provisional timeout in milliseconds', function(done) {
+        remoteAgent.disconnect() ;
+        remoteAgent2.disconnect() ;
+        var mockedConfig = merge( {
+            proxyTarget: ['sip:nobody@127.0.0.1:6060',cfg.remote_uri2],
+            proxyType: 'stateful',
+            provisionalTimeout: '800ms'
+        }, cfg) ;
+        remoteAgent = require('../../examples/proxy/app')(mockedConfig) ;
+        remoteAgent.on('connect', function() {
+
+            var mockedConfig = require('./fixtures/remoteConfig2') ;
+            remoteAgent2 = require('../../examples/invite-success-uas-bye/app')(mockedConfig) ;
+            remoteAgent2.on('connect', function() {
+
+                //
+                //install a handler for the BYE request
+                //
+                localAgent.set('handler', function( req, res){
+                    req.method.should.eql('BYE') ;
+                    res.send(200, function(err, bye){
+                        should.not.exist(err) ;
+                        localAgent.idle.should.be.true; 
+                        setTimeout(function(){
+                            remoteAgent.idle.should.be.true; 
+                            done() ;
+                        }, 50) ;
+                    }) ;
+                }) ;
+
+                localAgent.request({
+                    uri: config.request_uri,
+                    method: 'INVITE',
+                    body: config.sdp
+                }, function( err, req ) {
+                    should.not.exist(err) ;
+                    req.on('response', function(res, ack){
+                        res.should.have.property('status',200); 
+                        ack() ;
+                    }) ;
+                }) ;            
+            }) ;
+        }) ;
+    }) ;    
+    it('should support a final timeout in seconds', function(done) {
+        remoteAgent.disconnect() ;
+        remoteAgent2.disconnect() ;
+        var mockedConfig = merge( {
+            proxyTarget: [cfg.remote_uri2,cfg.remote_uri2],
+            proxyType: 'stateful',
+            provisionalTimeout: '1500ms',
+            finalTimeout: '3s'
+        }, cfg) ;
+        remoteAgent = require('../../examples/proxy/app')(mockedConfig) ;
+        remoteAgent.on('connect', function() {
+
+            var mockedConfig = merge( {allowCancel: 1}, require('./fixtures/remoteConfig2') );
+            remoteAgent2 = require('../../examples/invite-success-uas-bye/app')(mockedConfig) ;
+            remoteAgent2.on('connect', function() {
+
+                //
+                //install a handler for the BYE request
+                //
+                localAgent.set('handler', function( req, res){
+                    req.method.should.eql('BYE') ;
+                    res.send(200, function(err, bye){
+                        should.not.exist(err) ;
+                        localAgent.idle.should.be.true; 
+                        setTimeout(function(){
+                            remoteAgent.idle.should.be.true; 
+                            done() ;
+                        }, 50) ;
+                    }) ;
+                }) ;
+
+                localAgent.request({
+                    uri: config.request_uri,
+                    method: 'INVITE',
+                    body: config.sdp
+                }, function( err, req ) {
+                    should.not.exist(err) ;
+                    req.on('response', function(res, ack){
+                        if( res.status >= 200 ) {
+                            res.should.have.property('status',200); 
+                            ack() ;                            
+                        }
+                    }) ;
+                }) ;            
+            }) ;
+        }) ;
+    }) ;    
+
 }) ;
