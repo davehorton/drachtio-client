@@ -1,3 +1,6 @@
+echo "ls /tmp"
+ls -lrt /tmp
+
 echo "/tmp/drachtio_local_log_00000.log"
 cat /tmp/drachtio_local_log_00000.log
 
