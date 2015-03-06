@@ -9,11 +9,11 @@ module.exports = function( config ) {
 	var dialogId ;
 
 	var count = 0 ;
-	var config
+	var reject_ceiling = config.allowCancel || 0 ;
 
 	function handler(req,res) {
 		if( req.method === 'INVITE') {
-			if( 0 === count++ && config.allowCancel ) {
+			if( count++ < reject_ceiling ) {
 				res.send(180) ;
 			}
 			else {

@@ -425,12 +425,58 @@ describe('proxy', function() {
             proxyTarget: [cfg.remote_uri2,cfg.remote_uri2],
             proxyType: 'stateful',
             provisionalTimeout: '1500ms',
-            finalTimeout: '3s'
+            finalTimeout: '2s'
         }, cfg) ;
         remoteAgent = require('../../examples/proxy/app')(mockedConfig) ;
         remoteAgent.on('connect', function() {
 
             var mockedConfig = merge( {allowCancel: 1}, require('./fixtures/remoteConfig2') );
+            remoteAgent2 = require('../../examples/invite-success-uas-bye/app')(mockedConfig) ;
+            remoteAgent2.on('connect', function() {
+
+                //
+                //install a handler for the BYE request
+                //
+                localAgent.set('handler', function( req, res){
+                    req.method.should.eql('BYE') ;
+                    res.send(200, function(err, bye){
+                        should.not.exist(err) ;
+                        localAgent.idle.should.be.true; 
+                        setTimeout(function(){
+                            remoteAgent.idle.should.be.true; 
+                            done() ;
+                        }, 50) ;
+                    }) ;
+                }) ;
+
+                localAgent.request({
+                    uri: config.request_uri,
+                    method: 'INVITE',
+                    body: config.sdp
+                }, function( err, req ) {
+                    should.not.exist(err) ;
+                    req.on('response', function(res, ack){
+                        if( res.status >= 200 ) {
+                            res.should.have.property('status',200); 
+                            ack() ;                            
+                        }
+                    }) ;
+                }) ;            
+            }) ;
+        }) ;
+    }) ;    
+    it('should cancel multiple invites if necessary', function(done) {
+        remoteAgent.disconnect() ;
+        remoteAgent2.disconnect() ;
+        var mockedConfig = merge( {
+            proxyTarget: [cfg.remote_uri2,cfg.remote_uri2,cfg.remote_uri2],
+            proxyType: 'stateful',
+            finalTimeout: '1s'
+        }, cfg) ;
+        remoteAgent = require('../../examples/proxy/app')(mockedConfig) ;
+        remoteAgent.on('connect', function() {
+
+            var mockedConfig = merge( {allowCancel: 2}, require('./fixtures/remoteConfig2') );
             remoteAgent2 = require('../../examples/invite-success-uas-bye/app')(mockedConfig) ;
             remoteAgent2.on('connect', function() {
 

@@ -20,5 +20,5 @@ module.exports =  {
         'a=rtpmap:101 telephone-event/8000\n' + 
         'a=fmtp:101 0-15\n' + 
         'a=sendrecv\n',
-        apiLog: '/tmp/api_remote.txt'
+        apiLog: '/tmp/api_remote2.txt'
 } ;
