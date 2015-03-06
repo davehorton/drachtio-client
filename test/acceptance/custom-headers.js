@@ -21,6 +21,10 @@ describe('custom headers', function() {
                 done() ;
             });        
         }) ;
+        remoteAgent.on('error', function(err){
+            debug('error (remoteAgent): ' + err) ;
+        }) ;
+
     }) ;
     after(function(done){
         localAgent.disconnect() ;
