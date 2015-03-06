@@ -1,4 +1,5 @@
 /sbin/ifconfig
+/sbin/iptables -F
 /sbin/iptables -L
 cd ..
 git clone https://github.com/davehorton/drachtio-server
