@@ -1,3 +1,5 @@
+/sbin/ifconfig
+/sbin/iptables -L
 cd ..
 git clone https://github.com/davehorton/drachtio-server
 cd drachtio-server
@@ -11,4 +13,3 @@ make
 sudo make install
 cd ../../drachtio-client
 which drachtio
-/sbin/ifconfig
