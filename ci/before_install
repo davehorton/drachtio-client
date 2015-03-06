@@ -10,3 +10,4 @@ cd build
 make
 sudo make install
 cd ../../drachtio-client
+which drachtio
