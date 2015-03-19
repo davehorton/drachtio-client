@@ -1,7 +1,7 @@
 <drachtio>
 
     <!-- udp port to listen on for client connections (default 8022), and shared secret used to authenticate clients -->
-        <admin port="8023" secret="cymru">127.0.0.1</admin>
+        <admin port="8025" secret="cymru">127.0.0.1</admin>
   
     <!-- sip configuration -->
     <sip>
@@ -12,16 +12,14 @@
                     sip:*;transport=tcp     -- tcp connections only
                     sip:*:5061              -- listen on port 5061
         -->
-        <contact>sip:127.0.0.1:5061</contact>
+        <contact>sip:127.0.0.1:5063</contact>
     </sip>
 
-    <cdrs>true</cdrs>
-    
     <!-- logging configuration -->
     <logging>
 
         <file>
-            <name>/tmp/drachtio_remote_log_%5N.log</name>
+            <name>/tmp/drachtio_remote3_log_%5N.log</name>
             <archive>/tmp</archive>
             <size>5</size>
             <auto-flush>true</auto-flush>

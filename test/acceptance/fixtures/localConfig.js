@@ -3,7 +3,8 @@ module.exports =  {
         ,connect_opts: {
                 host: '127.0.0.1'
                 ,port: 8022
-                ,secret: 'cymru'                
+                ,secret: 'cymru' 
+                ,methods: ['*']             
         }
         ,connect_opts2: {
                 host: '127.0.0.1'

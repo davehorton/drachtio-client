@@ -1,6 +1,7 @@
 var Agent = require('../..').Agent ;
 var fs = require('fs') ;
 var assert = require('assert') ;
+var debug = require('debug')('invite-100-rel') ;
 
 module.exports = function( config ) {
 
@@ -8,6 +9,7 @@ module.exports = function( config ) {
 
 	function handler(req,res) {
 		if( req.msg.method === 'INVITE') {
+			debug('got an INVITE in 100rel app') ;
 			var require = req.get('Require').toString() ;
 			assert(-1 !== require.indexOf('100rel'), 'expecting 100rel to be required') ;
 			inviteRes = res ;

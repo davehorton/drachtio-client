@@ -1,13 +1,15 @@
 
 MOCHA_OPTS= --check-leaks --bail
 REPORTER = spec
+NODE_ENV = test
+MOCHA = ./node_modules/.bin/mocha --reporter $(REPORTER) $(MOCHA_OPTS)
 
 check: test
 
 test: 
-	@NODE_ENV=test ./node_modules/.bin/mocha --reporter $(REPORTER) $(MOCHA_OPTS) ./test/acceptance
+	for file in ./test/acceptance/*.js; do NODE_ENV=test $(MOCHA) $$file; done
 
 debug-test: 
-	@NODE_ENV=test, DEBUG=* ./node_modules/.bin/mocha --reporter $(REPORTER) $(MOCHA_OPTS) ./test/acceptance
+	for file in ./test/acceptance/*.js; do NODE_ENV=test, DEBUG=* $(MOCHA) $$file; done
 
 .PHONY: test 

@@ -6,7 +6,7 @@ module.exports =  {
         }, 
         remote_uri : 'sip:1234@127.0.0.1',
         remote_uri2 : 'sip:1234@127.0.0.1:5062',
-  sdp: 'v=0\n' +
+        sdp: 'v=0\n' +
         'o=- 1385064302543926 1 IN IP4 127.0.0.1\n' + 
         's=Bria 3 release 3.5.5 stamp 71243\n' + 
         'c=IN IP4 127.0.0.1\n' + 
