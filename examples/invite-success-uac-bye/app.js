@@ -1,5 +1,6 @@
 var Agent = require('../..').Agent ;
 var fs = require('fs') ;
+var assert = require('assert') ;
 
 module.exports = function( config ) {
 
@@ -8,7 +9,11 @@ module.exports = function( config ) {
 			res.send(200, { body: config.sdp}) ;
 		}
 		else if( req.msg.method === 'BYE') {
-			res.send(200) ;
+			res.send(200, function(err) {
+					//all done
+					assert( agent.idle ); 
+					agent.disconnect() ;								
+			}) ;
 		}
 	} 
 

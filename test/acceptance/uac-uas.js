@@ -1,73 +1,34 @@
 var assert = require('assert');
-var spawn = require('child_process').spawn;
-var exec = require('child_process').exec;
 var should = require('should');
 var merge = require('merge') ;
-var config = require('./fixtures/localConfig');
-var fs = require('fs') ;
 var debug = require('debug')('drachtio-client') ;
-var async = require('async') ;
-var spawn = require('child_process').spawn ;
-var exec = require('child_process').exec ;
+var Agent = require('../..').Agent ;
+var fixture = require('drachtio-test-fixtures') ;
+var uac, uas ;
+var cfg = fixture(__dirname,[8050,8051],[6050,6051]) ;
 
-var uacServer, uasServer ;
-var uac, uas;
-var uacConfig, uasConfig;
-
-uacConfig = require('./fixtures/localConfig') ;
-uasConfig = require('./fixtures/remoteConfig') ;
-
-uacConfig.connect_opts.port = 8040; uacConfig.sipAddress = 'sip:127.0.0.1:6070';
-uasConfig.connect_opts.port = 8041; uasConfig.sipAddress = 'sip:127.0.0.1:6071';
-
-function configureUac( config ) {
-    uac = require('../..').Agent(function(req,res){}) ;
-    uac.set('api logger',fs.createWriteStream(config.apiLog) ) ;
-    uac.connect(config.connect_opts) ;
-    return uac ;
-}
-function connectAll( agents, cb ) {
-    async.each( agents, function( agent, callback ) {
-        if( agent.connected ) agent.disconnect() ;
-        agent.on('connect', function(err) {
-            return callback(err) ;
-        }) ;
-    }, function(err) {
-        if( err ) return cb(err) ;
-        cb() ;
-    }) ;
-}
-
-describe('uas / uas', function() {
+describe('uac / uas scenarios', function() {
     this.timeout(6000) ;
 
-     before(function(done){
-        exec('pkill drachtio', function () {
-            uacServer = spawn('drachtio',
-                ['-f','./fixtures/drachtio.conf.local.xml','-p',8040,'-c','sip:127.0.0.1:6070'],{cwd: process.cwd() + '/test/acceptance'}) ;
-            uasServer = spawn('drachtio',
-                ['-f','./fixtures/drachtio.conf.remote.xml','-p',8041,'-c','sip:127.0.0.1:6071'],{cwd: process.cwd() + '/test/acceptance'}) ;
-            done() ;
-        }) ;
+    before(function(done){
+        cfg.startServers(done) ;
     }) ;
     after(function(done){
-        debug('turning down servers') ;
-        this.timeout(1000) ;
-        setTimeout( function() {
-            uacServer.kill() ;
-            uasServer.kill() ;
-            done() ;
-        }, 250) ;
+        cfg.stopServers(done) ;
     }) ;
  
     it('should be able to set a custom header', function(done) {
-        uac = configureUac( uacConfig ) ;
-        uas = require('../../examples/custom-headers/app')(require('./fixtures/remoteConfig')) ;
-        connectAll([uac, uas], function(err){
+        var self = this ;
+        uac = cfg.configureUac( cfg.client[0], Agent ) ;
+        uas = require('../../examples/custom-headers/app')(cfg.client[1]) ;
+        cfg.connectAll([uac, uas], function(err){
             if( err ) throw err ;
             uac.request({
-                uri: uasConfig.sipAddress,
-                method: 'OPTIONS'
+                uri: cfg.sipServer[1],
+                method: 'OPTIONS',
+                headers: {
+                    Subject: self.test.fullTitle()
+                }
             }, function( err, req ) {
                 should.not.exist(err) ;
                 req.on('response', function(res){
@@ -80,14 +41,18 @@ describe('uas / uas', function() {
             }) ;
         }) ;
     }) ;    
-    it('must be able to set a well-known header', function(done) {
-        uac = configureUac( uacConfig ) ;
-        uas = require('../../examples/custom-headers/app')(require('./fixtures/remoteConfig')) ;
-        connectAll([uac, uas], function(err){
+    it('should be able to set a well-known header', function(done) {
+        var self = this ;
+        uac = cfg.configureUac( cfg.client[0], Agent ) ;
+        uas = require('../../examples/custom-headers/app')(cfg.client[1]) ;
+        cfg.connectAll([uac, uas], function(err){
             if( err ) throw err ;
             uac.request({
-                uri: uasConfig.sipAddress,
-                method: 'MESSAGE'
+                uri: cfg.sipServer[1],
+                method: 'MESSAGE',
+                headers: {
+                    Subject: self.test.fullTitle()
+                }
             }, function( err, req ) {
                 should.not.exist(err) ;
                 req.on('response', function(res){
@@ -100,15 +65,19 @@ describe('uas / uas', function() {
             }) ;
         }) ;
     }) ;    
-    it('must be able to reject an INVITE', function(done) {
-        uac = configureUac( uacConfig ) ;
-        uas = require('../../examples/invite-non-success/app')(merge({status: 486}, require('./fixtures/remoteConfig'))) ;
-        connectAll([uac, uas], function(err){
+    it('should be able to reject an INVITE', function(done) {
+        var self = this ;
+        uac = cfg.configureUac( cfg.client[0], Agent ) ;
+        uas = require('../../examples/invite-non-success/app')(merge({status:486}, cfg.client[1])) ;
+        cfg.connectAll([uac, uas], function(err){
             if( err ) throw err ;
             uac.request({
-                uri: uasConfig.sipAddress,
+                uri: cfg.sipServer[1],
                 method: 'INVITE',
-                body: uacConfig.sdp
+                body: cfg.client[0].sdp,
+                headers: {
+                    Subject: self.test.fullTitle()
+                }
             }, function( err, req ) {
                 should.not.exist(err) ;
                 req.on('response', function(res, ack){
@@ -120,15 +89,19 @@ describe('uas / uas', function() {
             }) ;
         }) ;
     }) ;
-    it('must be able to cancel an INVITE', function(done) {
-        uac = configureUac( uacConfig ) ;
-        uas = require('../../examples/invite-cancel/app')(require('./fixtures/remoteConfig')) ;
-        connectAll([uac, uas], function(err){
+    it('should be able to cancel an INVITE', function(done) {
+        var self = this ;
+        uac = cfg.configureUac( cfg.client[0], Agent ) ;
+        uas = require('../../examples/invite-cancel/app')(cfg.client[1]) ;
+        cfg.connectAll([uac, uas], function(err){
             if( err ) throw err ;
             uac.request({
-                uri: uasConfig.sipAddress,
+                uri: cfg.sipServer[1],
                 method: 'INVITE',
-                body: uacConfig.sdp
+                body: cfg.client[0].sdp,
+                headers: {
+                    Subject: self.test.fullTitle()
+                }
             }, function( err, req ) {
                 should.not.exist(err) ;
                 req.on('response', function(res, ack){
@@ -147,10 +120,11 @@ describe('uas / uas', function() {
             }) ;
         }) ;
     }) ;    
-    it('invite success then uas sends bye', function(done) {
-        uac = configureUac( uacConfig ) ;
-        uas = require('../../examples/invite-success-uas-bye/app')(require('./fixtures/remoteConfig')) ;
-        connectAll([uac, uas], function(err){
+    it('should connect a call and allow tear down from UAS side', function(done) {
+        var self = this ;
+        uac = cfg.configureUac( cfg.client[0], Agent ) ;
+        uas = require('../../examples/invite-success-uas-bye/app')(cfg.client[1]) ;
+        cfg.connectAll([uac, uas], function(err){
             if( err ) throw err ;
 
             uac.set('handler', function( req, res){
@@ -158,16 +132,16 @@ describe('uas / uas', function() {
                 res.send(200, function(err, bye){
                     should.not.exist(err) ;
                     uac.idle.should.be.true; 
-                    setTimeout(function(){
-                        uas.idle.should.be.true; 
-                        done() ;
-                    }, 50) ;
+                    done() ;
                 }) ;
             }) ;
             uac.request({
-                uri: uasConfig.sipAddress,
+                uri: cfg.sipServer[1],
                 method: 'INVITE',
-                body: uacConfig.sdp
+                body: cfg.client[0].sdp,
+                headers: {
+                    Subject: self.test.fullTitle()
+                }
             }, function( err, req ) {
                 should.not.exist(err) ;
                 req.on('response', function(res, ack){
@@ -180,16 +154,20 @@ describe('uas / uas', function() {
             }) ;
         }) ;
     }) ;    
-    it('invite success then uac sends bye', function(done) {
-        uac = configureUac( uacConfig ) ;
-        uas = require('../../examples/invite-success-uac-bye/app')(require('./fixtures/remoteConfig')) ;
-        connectAll([uac, uas], function(err){
+    it('should connect a call and allow tear down from UAC side', function(done) {
+        var self = this ;
+        uac = cfg.configureUac( cfg.client[0], Agent ) ;
+        uas = require('../../examples/invite-success-uac-bye/app')(cfg.client[1]) ;
+        cfg.connectAll([uac, uas], function(err){
             if( err ) throw err ;
 
             uac.request({
-                uri: uasConfig.sipAddress,
+                uri: cfg.sipServer[1],
                 method: 'INVITE',
-                body: uacConfig.sdp
+                body: cfg.client[0].sdp,
+                headers: {
+                    Subject: self.test.fullTitle()
+                }
             }, function( err, req ) {
                 should.not.exist(err) ;
                 req.on('response', function(res, ack){
@@ -205,7 +183,6 @@ describe('uas / uas', function() {
                             bye.on('response', function(response){
                                 response.should.have.property('status',200);
                                 uac.idle.should.be.true ;
-                                uas.idle.should.be.true ;
                                 done() ;
                             }) ;
                         }) ;
@@ -214,19 +191,21 @@ describe('uas / uas', function() {
             }) ;
         }) ;
     }) ;    
-    it('invite with reliable provisional responses', function(done) {
-        uac = configureUac( uacConfig ) ;
-        uas = require('../../examples/invite-100rel/app')(require('./fixtures/remoteConfig')) ;
-        connectAll([uac, uas], function(err){
+    it('should be able to connect a call with a reliable provisional response', function(done) {
+        var self = this ;
+        uac = cfg.configureUac( cfg.client[0], Agent ) ;
+        uas = require('../../examples/invite-100rel/app')(cfg.client[1]) ;
+        cfg.connectAll([uac, uas], function(err){
             if( err ) throw err ;
 
             uac.request({
-                uri: uasConfig.sipAddress,
+                uri: cfg.sipServer[1],
                 method: 'INVITE',
                 headers: {
-                    'Require': '100rel'
+                    'Require': '100rel',
+                    'Subject': self.test.fullTitle()
                 },
-                body: uacConfig.sdp
+                body: cfg.client[0].sdp
             }, function( err, req ) {
                 should.not.exist(err) ;
                 req.on('response', function(res, ack){
@@ -248,7 +227,6 @@ describe('uas / uas', function() {
                                 bye.on('response', function(response){
                                     response.should.have.property('status',200);
                                     uac.idle.should.be.true ;
-                                    uas.idle.should.be.true ;
                                     done() ;
                                 }) ;
                             }) ;

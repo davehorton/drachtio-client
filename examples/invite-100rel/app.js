@@ -27,7 +27,13 @@ module.exports = function( config ) {
 			inviteRes.send(200, { body: config.sdp}) ;
 		}		
 		else if( req.msg.method === 'BYE') {
-			res.send(200) ;
+			res.send(200, function(err){
+				//all done
+				debug('exiting..'); 
+				assert(!err); 
+				assert( agent.idle ); 
+				agent.disconnect() ;								
+			}) ;
 		}
 	} 
 

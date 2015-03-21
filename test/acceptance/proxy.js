@@ -1,117 +1,53 @@
 var assert = require('assert');
-var spawn = require('child_process').spawn;
-var exec = require('child_process').exec;
 var should = require('should');
 var merge = require('merge') ;
-var config = require('./fixtures/localConfig');
-var fs = require('fs') ;
 var debug = require('debug')('drachtio-client') ;
-var async = require('async') ;
-var spawn = require('child_process').spawn ;
-var exec = require('child_process').exec ;
+var Agent = require('../..').Agent ;
+var fixture = require('drachtio-test-fixtures') ;
+var uac, proxy, uas ;
+var cfg = fixture(__dirname,[8060,8061,8062],[6060,6061,6062]) ;
 
-var uacServer, proxyServer, uas1Server, uas2Server ;
-var uac, proxy, uas1, uas2;
-var uacConfig, proxyConfig, uas1Config, uas2Config;
-
-uacConfig = require('./fixtures/localConfig') ;
-proxyConfig = require('./fixtures/remoteConfig') ;
-uas1Config = require('./fixtures/remoteConfig2') ;
-uas2Config = clone(uas1Config);
-
-uacConfig.connect_opts.port = 8030; uacConfig.sipAddress = 'sip:127.0.0.1:6060';
-proxyConfig.connect_opts.port = 8031; proxyConfig.sipAddress = 'sip:127.0.0.1:6061';
-uas1Config.connect_opts.port = 8032; uas1Config.sipAddress = 'sip:127.0.0.1:6062';
-uas2Config.connect_opts.port = 8033; uas2Config.sipAddress = 'sip:127.0.0.1:6063';
-
-debug('uas1Config: ', uas1Config) ;
-debug('uas2Config: ', uas2Config) ;
-
-function clone(obj) { return JSON.parse(JSON.stringify(obj)); }
-
-function configureUac( config ) {
-    uac = require('../..').Agent(function(req,res){}) ;
-    uac.set('api logger',fs.createWriteStream(config.apiLog) ) ;
-    uac.connect(config.connect_opts) ;
-    return uac ;
-}
-function connectAll( agents, cb ) {
-    async.each( agents, function( agent, callback ) {
-        if( agent.connected ) agent.disconnect() ;
-        agent.on('connect', function(err) {
-            return callback(err) ;
-        }) ;
-    }, function(err) {
-        if( err ) return cb(err) ;
-        cb() ;
-    }) ;
-}
-
-describe('proxy', function() {
+describe('proxy scenarios', function() {
     this.timeout(6000) ;
 
     before(function(done){
-        exec('pkill drachtio', function () {
-            uacServer = spawn('drachtio',
-                ['-f','./fixtures/drachtio.conf.local.xml','-p',8030,'-c','sip:127.0.0.1:6060'],{cwd: process.cwd() + '/test/acceptance'}) ;
-            proxyServer = spawn('drachtio',
-                ['-f','./fixtures/drachtio.conf.remote.xml','-p',8031,'-c','sip:127.0.0.1:6061'],{cwd: process.cwd() + '/test/acceptance'}) ;
-            uas1Server = spawn('drachtio',
-                ['-f','./fixtures/drachtio.conf.remote2.xml','-p',8032,'-c','sip:127.0.0.1:6062'],{cwd: process.cwd() + '/test/acceptance'}) ;
-            uas2Server = spawn('drachtio',
-                ['-f','./fixtures/drachtio.conf.remote3.xml','-p',8033,'-c','sip:127.0.0.1:6063'],{cwd: process.cwd() + '/test/acceptance'}) ;
-             done() ;
-        }) ;
+        cfg.startServers(done) ;
     }) ;
     after(function(done){
-        this.timeout(1000) ;
-        setTimeout( function() {
-            uacServer.kill() ;
-            proxyServer.kill() ;
-            uas1Server.kill() ;
-            uas2Server.kill() ;
-            done() ;
-        }, 250) ;
+        cfg.stopServers(done) ;
     }) ;
  
     it('should respond 483 Too Many Hops when Max-Forwards is 0', function(done) {
-        uac = configureUac( uacConfig ) ;
-        proxy = require('../../examples/proxy/app')(merge( {
-            proxyTarget: uas1Config.sipAddress,
-            remainInDialog: true
-        }, proxyConfig)) ;
-        connectAll([uac, proxy], function(err){
-            if( err ) throw err ;
-            
+        var self = this ;
+        uac = cfg.configureUac( cfg.client[0], Agent ) ;
+        proxy = require('../../examples/proxy/app')(merge({proxyTarget: cfg.sipServer[2], remainInDialog: true, label: this.test.fullTitle()}, cfg.client[1])); 
+        cfg.connectAll( [uac, proxy], function(err){
+            if( err ) throw err ;            
             uac.request({
-                uri: proxyConfig.sipAddress,
+                uri: cfg.sipServer[1],
                 method: 'INVITE',
                 headers: {
-                    'Max-Forwards': 0
+                    'Max-Forwards': 0,
+                    'Subject': self.test.fullTitle()
                 },
-                body: config.sdp
+                body: cfg.client[0].sdp
             }, function( err, req ) {
                 should.not.exist(err) ;
                 req.on('response', function(res){
                     res.should.have.property('status',483); 
                     uac.idle.should.be.true ;
-                    setTimeout( function() {
-                        proxy.idle.should.be.true ;
-                        done() ;                        
-                    }, 100);
+                    done() ;                        
                 }) ;
             }) ;
         }) ;
     }) ;
 
     it('should decrement Max-Forwards when provided', function(done) {
-        uac = configureUac( uacConfig ) ;
-        proxy = require('../../examples/proxy/app')(merge( {
-            proxyTarget: uas1Config.sipAddress,
-            remainInDialog: false
-        }, proxyConfig)) ;
-        uas1 = require('../../examples/invite-success-uas-bye/app')(uas1Config) ;
-        connectAll([uac, proxy, uas1], function(err){
+        var self = this 
+        uac = cfg.configureUac( cfg.client[0], Agent ) ;
+        proxy = require('../../examples/proxy/app')(merge({proxyTarget: cfg.sipServer[2], remainInDialog: false}, cfg.client[1])); 
+        uas = require('../../examples/invite-success-uas-bye/app')(cfg.client[2]) ;
+        cfg.connectAll([uac, proxy, uas], function(err){
             if( err )  throw err ;
             //
             //install a handler for the BYE request
@@ -121,20 +57,18 @@ describe('proxy', function() {
                 res.send(200, function(err, bye){
                     should.not.exist(err) ;
                     uac.idle.should.be.true; 
-                    setTimeout(function(){
-                        proxy.idle.should.be.true; 
-                        done() ;
-                    }, 100) ;
+                    done() ;
                 }) ;
             }) ;
 
             uac.request({
-                uri: proxyConfig.sipAddress,
+                uri: cfg.sipServer[1],
                 method: 'INVITE',
                 headers: {
-                    'Max-Forwards': 11
+                    'Max-Forwards': 11,
+                    'Subject': self.test.fullTitle()
                 },
-                body: proxyConfig.sdp
+                body: cfg.client[0].sdp
             }, function( err, req ) {
                 should.not.exist(err) ;
                 req.on('response', function(res, ack){
@@ -147,37 +81,28 @@ describe('proxy', function() {
     }) ;    
 
     it('should add Record-Route header when remainInDialog is set to true', function(done) {
-        uac = configureUac( uacConfig ) ;
-        proxy = require('../../examples/proxy/app')(merge( {
-            proxyTarget: uas1Config.sipAddress,
-            remainInDialog: true
-        }, proxyConfig)) ;
-        uas1 = require('../../examples/invite-success-uas-bye/app')(uas1Config) ;
-
-        connectAll([uac, proxy, uas1], function(err){
+        var self = this 
+        uac = cfg.configureUac( cfg.client[0], Agent ) ;
+        proxy = require('../../examples/proxy/app')(merge({proxyTarget: cfg.sipServer[2], remainInDialog: true}, cfg.client[1])); 
+        uas = require('../../examples/invite-success-uas-bye/app')(cfg.client[2]) ;
+        cfg.connectAll([uac, proxy, uas], function(err){
             if( err ) throw err ;
-            //
-            //install a handler for the BYE request
-            //
             uac.set('handler', function( req, res){
                 req.method.should.eql('BYE') ;
                 res.send(200, function(err, bye){
                     should.not.exist(err) ;
                     uac.idle.should.be.true; 
-                    setTimeout(function(){
-                        proxy.idle.should.be.true; 
-                        done() ;
-                    }, 50) ;
+                    done() ;
                 }) ;
             }) ;
 
             uac.request({
-                uri: proxyConfig.sipAddress,
+                uri: cfg.sipServer[1],
                 method: 'INVITE',
                 headers: {
-                    'Max-Forwards': 70
+                    'Subject' :self.test.fullTitle()
                 },
-                body: proxyConfig.sdp
+                body: cfg.client[0].sdp
             }, function( err, req ) {
                 should.not.exist(err) ;
                 req.on('response', function(res, ack){
@@ -190,38 +115,33 @@ describe('proxy', function() {
     }) ;
 
     it('should not add Record-Route header when remainInDialog set to false', function(done) {
-        uac = configureUac( uacConfig ) ;
-        proxy = require('../../examples/proxy/app')(merge( {
-            proxyTarget: uas1Config.sipAddress,
-            remainInDialog: false
-        }, proxyConfig)) ;
-        uas1 = require('../../examples/invite-success-uas-bye/app')(uas1Config) ;
-        connectAll([uac, proxy, uas1], function(err){
-
+        var self = this ;
+        uac = cfg.configureUac( cfg.client[0], Agent ) ;
+        proxy = require('../../examples/proxy/app')(merge({proxyTarget: cfg.sipServer[2], remainInDialog: false}, cfg.client[1])); 
+        uas = require('../../examples/invite-success-uas-bye/app')(cfg.client[2]) ;
+        cfg.connectAll([uac, proxy, uas], function(err){
+            if( err ) throw err ;
             uac.set('handler', function( req, res){
                 req.method.should.eql('BYE') ;
                 res.send(200, function(err, bye){
                     should.not.exist(err) ;
                     uac.idle.should.be.true; 
-                    setTimeout(function(){
-                        proxy.idle.should.be.true; 
-                        done() ;
-                    }, 50) ;
+                    done() ;
                 }) ;
             }) ;
 
             uac.request({
-                uri: proxyConfig.sipAddress,
+                uri: cfg.sipServer[1],
                 method: 'INVITE',
                 headers: {
-                    'Max-Forwards': 70
+                    'Subject' : self.test.fullTitle()
                 },
-                body: uacConfig.sdp
+                body: cfg.client[0].sdp
             }, function( err, req ) {
                 should.not.exist(err) ;
                 req.on('response', function(res, ack){
                     res.should.have.property('status',200); 
-                    should.not.exist(res.get('Record-Route')) ;
+                    should.not.exist( res.get('Record-Route') ) ;
                     ack() ;
                 }) ;
             }) ;            
@@ -229,62 +149,54 @@ describe('proxy', function() {
     }) ; 
     
     it('should not add Record-Route header by default', function(done) {
-        uac = configureUac( uacConfig ) ;
-        proxy = require('../../examples/proxy/app')(merge( {
-            proxyTarget: uas1Config.sipAddress
-        }, proxyConfig)) ;
-        uas1 = require('../../examples/invite-success-uas-bye/app')(uas1Config) ;
-        connectAll([uac, proxy, uas1], function(err){
+        var self = this;
+        uac = cfg.configureUac( cfg.client[0], Agent ) ;
+        proxy = require('../../examples/proxy/app')(merge({proxyTarget: cfg.sipServer[2]}, cfg.client[1])); 
+        uas = require('../../examples/invite-success-uas-bye/app')(cfg.client[2]) ;
+        cfg.connectAll([uac, proxy, uas], function(err){
             if( err ) throw err ;
             uac.set('handler', function( req, res){
                 req.method.should.eql('BYE') ;
                 res.send(200, function(err, bye){
                     should.not.exist(err) ;
                     uac.idle.should.be.true; 
-                    setTimeout(function(){
-                        proxy.idle.should.be.true; 
-                        done() ;
-                    }, 50) ;
+                    done() ;
                 }) ;
             }) ;
 
             uac.request({
-                uri: proxyConfig.sipAddress,
+                uri: cfg.sipServer[1],
                 method: 'INVITE',
                 headers: {
-                    'Max-Forwards': 70,
-                    'Subject': 'should not add Record-Route header by default'
+                    'Subject': self.test.fullTitle()
                 },
-                body: proxyConfig.sdp
+                body: cfg.client[0].sdp
             }, function( err, req ) {
                 should.not.exist(err) ;
                 req.on('response', function(res, ack){
                     res.should.have.property('status',200); 
-                    should.not.exist(res.get('Record-Route')) ;
+                    should.not.exist( res.get('Record-Route') ) ;
                     ack() ;
                 }) ;
             }) ;            
         }) ;
     }) ;    
 
-    it('should handle PRACK during call setup when 100rel required', function(done) {
-        uac = configureUac( uacConfig ) ;
-        proxy = require('../../examples/proxy/app')(merge( {
-            proxyTarget: uas1Config.sipAddress,
-            remainInDialog: true
-        }, proxyConfig)) ;
-        uas1 = require('../../examples/invite-100rel/app')(uas1Config) ;
-        connectAll([uac, proxy, uas1], function(err){
+    it('should handle handle reliable provisional responses', function(done) {
+        var self = this ;
+        uac = cfg.configureUac( cfg.client[0], Agent ) ;
+        proxy = require('../../examples/proxy/app')(merge({proxyTarget: cfg.sipServer[2], remainInDialog: true}, cfg.client[1])); 
+        uas = require('../../examples/invite-100rel/app')(cfg.client[2]) ;
+        cfg.connectAll([uac, proxy, uas], function(err){
             if( err ) throw err ;
-
             uac.request({
-                uri: proxyConfig.sipAddress,
+                uri: cfg.sipServer[1],
                 method: 'INVITE',
                 headers: {
                     'Require': '100rel',
-                    'Subject': 'it should handle PRACK during call setup when 100rel required'
+                    'Subject': self.test.fullTitle()
                 },
-                body: proxyConfig.sdp
+                body: cfg.client[0].sdp
             }, function( err, req ) {
                 should.not.exist(err) ;
                 req.on('response', function(res, ack){
@@ -308,7 +220,6 @@ describe('proxy', function() {
                                 bye.on('response', function(response){
                                     response.should.have.property('status',200);
                                     uac.idle.should.be.true ;
-                                    proxy.idle.should.be.true ;
                                     done() ;
                                 }) ;
                             }) ;
@@ -318,7 +229,7 @@ describe('proxy', function() {
             }) ;            
         }) ;
     }) ;  
-  
+/*  
     it('should not follow redirect responses by default', function(done) {
         uac = configureUac( uacConfig ) ;
         proxy = require('../../examples/proxy/app')(merge( {

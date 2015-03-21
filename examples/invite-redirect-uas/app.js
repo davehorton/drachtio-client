@@ -31,6 +31,14 @@ module.exports = function( config ) {
         agent.request({
           method: 'BYE',
           stackDialogId: dialogId
+        }, function( err, req){
+          req.on('response', function(response){
+            //all done
+            assert(200 === response.status) ;
+            debug('exiting..'); 
+            assert( agent.idle ); 
+            agent.disconnect() ;                
+          }) ;
         }) ;      
       }, 1) ;
     }    

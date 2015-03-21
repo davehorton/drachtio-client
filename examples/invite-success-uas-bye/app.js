@@ -1,10 +1,9 @@
 var Agent = require('../..').Agent ;
 var fs = require('fs') ;
+var assert = require('assert'); 
 var debug = require('debug')('drachtio-client:invite-success-uas-bye') ;
 
 module.exports = function( config ) {
-
-	debug('config: ', config) ;
 
 	function handler(req,res) {
 		var locals = req.agent.locals ;
@@ -14,9 +13,6 @@ module.exports = function( config ) {
 				res.send(180) ;
 			}
 			else {
-				debug('sending INVITE, count %d, config: ', locals.count, locals); 
-
-				debug('answerDelay is %d', locals.delay) ;
 				setTimeout( function() {
 					res.send(200, { 
 						body: locals.sdp,
@@ -34,13 +30,23 @@ module.exports = function( config ) {
 				agent.request({
 					method: 'BYE',
 					stackDialogId: locals.dialogId
-				}) ;			
+				}, function(err, req){
+					if( err ) throw err ;
+					req.on('response', function(response){
+						//all done
+						assert(200 === response.status) ;
+						debug('exiting..'); 
+						assert( agent.idle ); 
+						agent.disconnect() ;								
+					}); 
+				}) ;
 			}, 1) ;
 		}
 	}
 
 	var agent = new Agent(handler) ;
 	agent.set('api logger',fs.createWriteStream(config.apiLog) ) ;
+	config.connect_opts.label = config.label; 
 	agent.connect(config.connect_opts) ;
 	agent.route('invite') ;
 	agent.route('ack') ;

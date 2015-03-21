@@ -1,12 +1,12 @@
 var Agent = require('../..').Agent ;
 var fs = require('fs') ;
+var assert = require('assert'); 
 var debug = require('debug')('drachtio-client') ;
 
 module.exports = function( config ) {
 
   function handler(req,res) {
     if( req.msg.method === 'INVITE') {
-      debug('proxy config: ', config) ;
 
       req.proxy({
         remainInDialog: config.remainInDialog,
@@ -19,7 +19,8 @@ module.exports = function( config ) {
           'Subject': req.get('Subject') || 'unnamed test'
         }
       }, function(err, results){
-        if( err ) return  ;
+          assert( agent.idle ); 
+          agent.disconnect() ;                
       }) ;
     }
   } 

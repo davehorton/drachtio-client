@@ -1,6 +1,6 @@
 var Agent = require('../..').Agent ;
 var fs = require('fs') ;
-var debug = require('debug')('drachtio-client') ;
+var debug = require('debug')('drachtio-client:cdr') ;
 
 module.exports = function( config ) {
 
@@ -21,23 +21,19 @@ module.exports = function( config ) {
   agent.set('api logger',fs.createWriteStream(config.apiLog) ) ;
   config.connect_opts.methods = [] ;
 
-  agent.connect(config.connect_opts) ;
-
-  if( !config.cdrOnly ) agent.route('invite') ;
-
-  var attempt, start, stop ;
+  var attempt = [] ;
+  var start = [] ;
+  var stop = [] ;
 
   agent.on('cdr:attempt', function(cdr){
-    attempt = cdr ;
-    debug('cdr: ', cdr) ;
+    debug('got an attempt cdr'); 
+    attempt.push( cdr ) ;
   }) ;
   agent.on('cdr:start', function(cdr){
-    start = cdr ;
-    debug('cdr: ', cdr) ;
+    start.push( cdr ) ;
   }) ;
   agent.on('cdr:stop', function(cdr){
-    stop = cdr ;
-    debug('cdr: ', cdr) ;
+    stop.push( cdr ) ;
   }) ;
 
   agent.getStartCdr = function() { 
@@ -49,6 +45,10 @@ module.exports = function( config ) {
   agent.getStopCdr = function() { 
     return stop; 
   } ;
+
+  agent.connect(config.connect_opts) ;
+
+  if( !config.cdrOnly ) agent.route('invite') ;
 
   return agent ;
 } ;
