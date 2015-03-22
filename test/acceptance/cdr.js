@@ -20,7 +20,7 @@ describe.only('cdr', function() {
     it('should write 1 attempt and 1 stop records when no clients connected', function(done) {
         var self = this ;
         uac = cfg.configureUac( cfg.client[0], Agent ) ;
-        proxy = require('../../examples/cdr/app')(merge({proxyTarget: cfg.sipServer[2], cdrOnly: true}, cfg.client[1])) ;
+        proxy = require('../scripts/cdr/app')(merge({proxyTarget: cfg.sipServer[2], cdrOnly: true}, cfg.client[1])) ;
         cfg.connectAll([uac, proxy], function(err){
             if( err ) throw err ;
             uac.request({

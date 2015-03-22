@@ -1,4 +1,4 @@
-var Agent = require('../..').Agent ;
+var Agent = require('../../..').Agent ;
 var fs = require('fs') ;
 var assert = require('assert') ;
 var debug = require('debug')('invite-100-rel') ;

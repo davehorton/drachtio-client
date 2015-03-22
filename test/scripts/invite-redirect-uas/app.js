@@ -1,4 +1,4 @@
-var Agent = require('../..').Agent ;
+var Agent = require('../../..').Agent ;
 var fs = require('fs') ;
 
 module.exports = function( config ) {

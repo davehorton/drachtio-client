@@ -20,7 +20,7 @@ describe('uac / uas scenarios', function() {
     it('should be able to set a custom header', function(done) {
         var self = this ;
         uac = cfg.configureUac( cfg.client[0], Agent ) ;
-        uas = require('../../examples/custom-headers/app')(cfg.client[1]) ;
+        uas = require('../scripts/custom-headers/app')(cfg.client[1]) ;
         cfg.connectAll([uac, uas], function(err){
             if( err ) throw err ;
             uac.request({
@@ -44,7 +44,7 @@ describe('uac / uas scenarios', function() {
     it('should be able to set a well-known header', function(done) {
         var self = this ;
         uac = cfg.configureUac( cfg.client[0], Agent ) ;
-        uas = require('../../examples/custom-headers/app')(cfg.client[1]) ;
+        uas = require('../scripts/custom-headers/app')(cfg.client[1]) ;
         cfg.connectAll([uac, uas], function(err){
             if( err ) throw err ;
             uac.request({
@@ -68,7 +68,7 @@ describe('uac / uas scenarios', function() {
     it('should be able to reject an INVITE', function(done) {
         var self = this ;
         uac = cfg.configureUac( cfg.client[0], Agent ) ;
-        uas = require('../../examples/invite-non-success/app')(merge({status:486}, cfg.client[1])) ;
+        uas = require('../scripts/invite-non-success/app')(merge({status:486}, cfg.client[1])) ;
         cfg.connectAll([uac, uas], function(err){
             if( err ) throw err ;
             uac.request({
@@ -92,7 +92,7 @@ describe('uac / uas scenarios', function() {
     it('should be able to cancel an INVITE', function(done) {
         var self = this ;
         uac = cfg.configureUac( cfg.client[0], Agent ) ;
-        uas = require('../../examples/invite-cancel/app')(cfg.client[1]) ;
+        uas = require('../scripts/invite-cancel/app')(cfg.client[1]) ;
         cfg.connectAll([uac, uas], function(err){
             if( err ) throw err ;
             uac.request({
@@ -123,7 +123,7 @@ describe('uac / uas scenarios', function() {
     it('should connect a call and allow tear down from UAS side', function(done) {
         var self = this ;
         uac = cfg.configureUac( cfg.client[0], Agent ) ;
-        uas = require('../../examples/invite-success-uas-bye/app')(cfg.client[1]) ;
+        uas = require('../scripts/invite-success-uas-bye/app')(cfg.client[1]) ;
         cfg.connectAll([uac, uas], function(err){
             if( err ) throw err ;
 
@@ -157,7 +157,7 @@ describe('uac / uas scenarios', function() {
     it('should connect a call and allow tear down from UAC side', function(done) {
         var self = this ;
         uac = cfg.configureUac( cfg.client[0], Agent ) ;
-        uas = require('../../examples/invite-success-uac-bye/app')(cfg.client[1]) ;
+        uas = require('../scripts/invite-success-uac-bye/app')(cfg.client[1]) ;
         cfg.connectAll([uac, uas], function(err){
             if( err ) throw err ;
 
@@ -194,7 +194,7 @@ describe('uac / uas scenarios', function() {
     it('should be able to connect a call with a reliable provisional response', function(done) {
         var self = this ;
         uac = cfg.configureUac( cfg.client[0], Agent ) ;
-        uas = require('../../examples/invite-100rel/app')(cfg.client[1]) ;
+        uas = require('../scripts/invite-100rel/app')(cfg.client[1]) ;
         cfg.connectAll([uac, uas], function(err){
             if( err ) throw err ;
 

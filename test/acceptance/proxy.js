@@ -20,7 +20,7 @@ describe('proxy scenarios', function() {
     it('should respond 483 Too Many Hops when Max-Forwards is 0', function(done) {
         var self = this ;
         uac = cfg.configureUac( cfg.client[0], Agent ) ;
-        proxy = require('../../examples/proxy/app')(merge({proxyTarget: cfg.sipServer[2], remainInDialog: true, label: this.test.fullTitle()}, cfg.client[1])); 
+        proxy = require('../scripts/proxy/app')(merge({proxyTarget: cfg.sipServer[2], remainInDialog: true, label: this.test.fullTitle()}, cfg.client[1])); 
         cfg.connectAll( [uac, proxy], function(err){
             if( err ) throw err ;            
             uac.request({
@@ -45,8 +45,8 @@ describe('proxy scenarios', function() {
     it('should decrement Max-Forwards when provided', function(done) {
         var self = this 
         uac = cfg.configureUac( cfg.client[0], Agent ) ;
-        proxy = require('../../examples/proxy/app')(merge({proxyTarget: cfg.sipServer[2], remainInDialog: false}, cfg.client[1])); 
-        uas = require('../../examples/invite-success-uas-bye/app')(cfg.client[2]) ;
+        proxy = require('../scripts/proxy/app')(merge({proxyTarget: cfg.sipServer[2], remainInDialog: false}, cfg.client[1])); 
+        uas = require('../scripts/invite-success-uas-bye/app')(cfg.client[2]) ;
         cfg.connectAll([uac, proxy, uas], function(err){
             if( err )  throw err ;
             //
@@ -83,8 +83,8 @@ describe('proxy scenarios', function() {
     it('should add Record-Route header when remainInDialog is set to true', function(done) {
         var self = this 
         uac = cfg.configureUac( cfg.client[0], Agent ) ;
-        proxy = require('../../examples/proxy/app')(merge({proxyTarget: cfg.sipServer[2], remainInDialog: true}, cfg.client[1])); 
-        uas = require('../../examples/invite-success-uas-bye/app')(cfg.client[2]) ;
+        proxy = require('../scripts/proxy/app')(merge({proxyTarget: cfg.sipServer[2], remainInDialog: true}, cfg.client[1])); 
+        uas = require('../scripts/invite-success-uas-bye/app')(cfg.client[2]) ;
         cfg.connectAll([uac, proxy, uas], function(err){
             if( err ) throw err ;
             uac.set('handler', function( req, res){
@@ -117,8 +117,8 @@ describe('proxy scenarios', function() {
     it('should not add Record-Route header when remainInDialog set to false', function(done) {
         var self = this ;
         uac = cfg.configureUac( cfg.client[0], Agent ) ;
-        proxy = require('../../examples/proxy/app')(merge({proxyTarget: cfg.sipServer[2], remainInDialog: false}, cfg.client[1])); 
-        uas = require('../../examples/invite-success-uas-bye/app')(cfg.client[2]) ;
+        proxy = require('../scripts/proxy/app')(merge({proxyTarget: cfg.sipServer[2], remainInDialog: false}, cfg.client[1])); 
+        uas = require('../scripts/invite-success-uas-bye/app')(cfg.client[2]) ;
         cfg.connectAll([uac, proxy, uas], function(err){
             if( err ) throw err ;
             uac.set('handler', function( req, res){
@@ -151,8 +151,8 @@ describe('proxy scenarios', function() {
     it('should not add Record-Route header by default', function(done) {
         var self = this;
         uac = cfg.configureUac( cfg.client[0], Agent ) ;
-        proxy = require('../../examples/proxy/app')(merge({proxyTarget: cfg.sipServer[2]}, cfg.client[1])); 
-        uas = require('../../examples/invite-success-uas-bye/app')(cfg.client[2]) ;
+        proxy = require('../scripts/proxy/app')(merge({proxyTarget: cfg.sipServer[2]}, cfg.client[1])); 
+        uas = require('../scripts/invite-success-uas-bye/app')(cfg.client[2]) ;
         cfg.connectAll([uac, proxy, uas], function(err){
             if( err ) throw err ;
             uac.set('handler', function( req, res){
@@ -185,8 +185,8 @@ describe('proxy scenarios', function() {
     it('should handle handle reliable provisional responses', function(done) {
         var self = this ;
         uac = cfg.configureUac( cfg.client[0], Agent ) ;
-        proxy = require('../../examples/proxy/app')(merge({proxyTarget: cfg.sipServer[2], remainInDialog: true}, cfg.client[1])); 
-        uas = require('../../examples/invite-100rel/app')(cfg.client[2]) ;
+        proxy = require('../scripts/proxy/app')(merge({proxyTarget: cfg.sipServer[2], remainInDialog: true}, cfg.client[1])); 
+        uas = require('../scripts/invite-100rel/app')(cfg.client[2]) ;
         cfg.connectAll([uac, proxy, uas], function(err){
             if( err ) throw err ;
             uac.request({
