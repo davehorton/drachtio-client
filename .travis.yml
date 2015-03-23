@@ -4,6 +4,4 @@ node_js:
 
 before_install: "sudo bash ci/before_install"
 
-script: "make debug-test"
-
 after_script: "sudo bash ci/after_install"
