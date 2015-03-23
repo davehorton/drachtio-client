@@ -1,4 +1,3 @@
-
 MOCHA_OPTS= --check-leaks --bail
 REPORTER = spec
 NODE_ENV = test
