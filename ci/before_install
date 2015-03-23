@@ -4,6 +4,7 @@
 cd ..
 git clone https://github.com/davehorton/drachtio-server
 cd drachtio-server
+sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
 git submodule init
 git submodule update
 autoreconf -fvi 
