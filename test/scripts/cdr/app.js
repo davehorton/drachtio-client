@@ -24,7 +24,7 @@ module.exports = function( config ) {
   var attempt = [] ;
   var start = [] ;
   var stop = [] ;
-
+/*
   agent.on('cdr:attempt', function(cdr){
     debug('got an attempt cdr'); 
     attempt.push( cdr ) ;
@@ -35,7 +35,7 @@ module.exports = function( config ) {
   agent.on('cdr:stop', function(cdr){
     stop.push( cdr ) ;
   }) ;
-
+*/
   agent.getStartCdr = function() { 
     return start; 
   }  ;

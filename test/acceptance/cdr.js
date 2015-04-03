@@ -23,6 +23,17 @@ describe.only('cdr', function() {
         proxy = require('../scripts/cdr/app')(merge({proxyTarget: cfg.sipServer[2], cdrOnly: true}, cfg.client[1])) ;
         cfg.connectAll([uac, proxy], function(err){
             if( err ) throw err ;
+            var attempt ;
+
+            proxy.on('cdr:attempt', function(cdr) {
+                attempt = true ;
+            }) ;
+            proxy.on('cdr:stop', function(cdr) {
+                if( attempt ) {
+                    done() ;
+                } 
+            }) ;
+
             uac.request({
                 uri: cfg.sipServer[1],
                 method: 'INVITE',
@@ -35,13 +46,6 @@ describe.only('cdr', function() {
                 req.on('response', function(res, ack){
                     res.should.have.property('status',503); 
                     ack() ;
-                    setTimeout(function(){
-                        should.exist( proxy.getAttemptCdr() ) ;
-                        should.exist( proxy.getStopCdr() ) ;
-                        proxy.getAttemptCdr().should.have.length(1) ;
-                        proxy.getStopCdr().should.have.length(1) ;
-                        done() ;                        
-                    }, 100) ;
                 }) ;
             }) ;            
         }) ;
