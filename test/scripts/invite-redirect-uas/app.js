@@ -1,10 +1,13 @@
 var Agent = require('../../..').Agent ;
 var fs = require('fs') ;
+var assert = require('assert') ;
+var debug = require('debug') ;
 
 module.exports = function( config ) {
 
   var dialogId ;
   var count = 0 ;
+  var hostport ;
 
   function handler(req,res) {
     if( req.method === 'INVITE') {
@@ -46,7 +49,9 @@ module.exports = function( config ) {
 
   var agent = new Agent(handler) ;
   agent.set('api logger',fs.createWriteStream(config.apiLog) ) ;
-  agent.connect(config.connect_opts) ;
+  agent.connect(config.connect_opts, function( err, sipAddress ){
+    hostport = sipAddress ;
+  }) ;
   agent.route('invite') ;
   agent.route('ack') ;
 

@@ -229,6 +229,136 @@ describe('proxy scenarios', function() {
             }) ;            
         }) ;
     }) ;  
+
+    it('should not follow redirect responses by default', function(done) {
+        var self = this;
+        uac = cfg.configureUac( cfg.client[0], Agent ) ;
+        proxy = require('../scripts/proxy/app')(merge({proxyTarget: cfg.sipServer[2]}, cfg.client[1])); 
+        uas = require('../scripts/invite-redirect-uas/app')(cfg.client[2]) ;
+        cfg.connectAll([uac, proxy, uas], function(err){
+            if( err ) throw err ;
+
+            uac.request({
+                uri: cfg.sipServer[1],
+                method: 'INVITE',
+                headers: {
+                    'Subject': self.test.fullTitle()
+                },
+                body: cfg.client[0].sdp
+            }, function( err, req ) {
+                should.not.exist(err) ;
+                req.on('response', function(res, ack){
+                    res.should.have.property('status',302); 
+                    ack() ;
+                    uac.idle.should.be.true ;
+                    done() ;
+                }) ;
+            }) ;            
+        }) ;
+    }) ;    
+    it('should follow redirect responses if configured to', function(done) {
+        var self = this;
+        uac = cfg.configureUac( cfg.client[0], Agent ) ;
+        proxy = require('../scripts/proxy/app')(merge({proxyTarget: cfg.sipServer[2], followRedirects: true}, cfg.client[1])); 
+        uas = require('../scripts/invite-redirect-uas/app')(merge({contact: cfg.sipServer[2]},cfg.client[2])) ;
+        cfg.connectAll([uac, proxy, uas], function(err){
+            if( err ) throw err ;
+            
+            uac.set('handler', function( req, res){
+                req.method.should.eql('BYE') ;
+                res.send(200, function(err, bye){
+                    should.not.exist(err) ;
+                    uac.idle.should.be.true; 
+                    done() ;
+                }) ;
+            }) ;
+
+            uac.request({
+                uri: cfg.sipServer[1],
+                method: 'INVITE',
+                headers: {
+                    'Subject': self.test.fullTitle()
+                },
+                body: cfg.client[0].sdp
+            }, function( err, req ) {
+                should.not.exist(err) ;
+                req.on('response', function(res, ack){
+                    res.should.have.property('status',200); 
+                    ack() ;
+                    uac.idle.should.be.true ;
+                }) ;
+            }) ;            
+        }) ;
+    }) ;    
+    it('should move past an unresponsive endpoint if a provisional timeout is set (ms)', function(done) {
+        var self = this;
+        uac = cfg.configureUac( cfg.client[0], Agent ) ;
+        proxy = require('../scripts/proxy/app')(merge({proxyTarget: ['sip:127.0.0.1:9000',cfg.sipServer[2]], provisionalTimeout: '100ms'}, cfg.client[1])); 
+        uas = require('../scripts/invite-success-uas-bye/app')(cfg.client[2]) ;
+        cfg.connectAll([uac, proxy, uas], function(err){
+            if( err ) throw err ;
+            
+            uac.set('handler', function( req, res){
+                req.method.should.eql('BYE') ;
+                res.send(200, function(err, bye){
+                    should.not.exist(err) ;
+                    uac.idle.should.be.true; 
+                    done() ;
+                }) ;
+            }) ;
+
+            uac.request({
+                uri: cfg.sipServer[1],
+                method: 'INVITE',
+                headers: {
+                    'Subject': self.test.fullTitle()
+                },
+                body: cfg.client[0].sdp
+            }, function( err, req ) {
+                should.not.exist(err) ;
+                req.on('response', function(res, ack){
+                    res.should.have.property('status',200); 
+                    ack() ;
+                    uac.idle.should.be.true ;
+                }) ;
+            }) ;            
+        }) ;
+    }) ;    
+    it('should move past an unresponsive endpoint if a provisional timeout is set (s)', function(done) {
+        var self = this;
+        uac = cfg.configureUac( cfg.client[0], Agent ) ;
+        proxy = require('../scripts/proxy/app')(merge({proxyTarget: ['sip:127.0.0.1:9000',cfg.sipServer[2]], provisionalTimeout: '2s'}, cfg.client[1])); 
+        uas = require('../scripts/invite-success-uas-bye/app')(cfg.client[2]) ;
+        cfg.connectAll([uac, proxy, uas], function(err){
+            if( err ) throw err ;
+            
+            uac.set('handler', function( req, res){
+                req.method.should.eql('BYE') ;
+                res.send(200, function(err, bye){
+                    should.not.exist(err) ;
+                    uac.idle.should.be.true; 
+                    done() ;
+                }) ;
+            }) ;
+
+            uac.request({
+                uri: cfg.sipServer[1],
+                method: 'INVITE',
+                headers: {
+                    'Subject': self.test.fullTitle()
+                },
+                body: cfg.client[0].sdp
+            }, function( err, req ) {
+                should.not.exist(err) ;
+                req.on('response', function(res, ack){
+                    res.should.have.property('status',200); 
+                    ack() ;
+                    uac.idle.should.be.true ;
+                }) ;
+            }) ;            
+        }) ;
+    }) ;    
+
 /*  
     it('should not follow redirect responses by default', function(done) {
         uac = configureUac( uacConfig ) ;
