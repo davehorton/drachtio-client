@@ -1,6 +1,6 @@
 {
   "name": "drachtio-client",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "low-level message exchange module for dracht.io",
   "main": "index.js",
   "scripts": {
@@ -20,7 +20,7 @@
     "curry": "^1.2.0",
     "debug": "^1.0.4",
     "delegates": "0.0.3",
-    "drachtio-sip": "^git+ssh://git@github.com:davehorton/drachtio-sip.git#v0.2.1",
+    "drachtio-sip": "^git+ssh://git@github.com:davehorton/drachtio-sip.git#v0.2.2",
     "merge": "^1.1.3",
     "node-uuid": "^1.4.1",
     "only": "0.0.2",
