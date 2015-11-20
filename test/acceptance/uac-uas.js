@@ -236,4 +236,65 @@ describe('uac / uas scenarios', function() {
             }) ;
         }) ;
     }) ;    
+    it.only('should handle reINVITEs', function(done) {
+        var self = this ;
+        uac = cfg.configureUac( cfg.client[0], Agent ) ;
+        uas = require('../scripts/invite-success-uac-reinvite-bye/app')(cfg.client[1]) ;
+        cfg.connectAll([uac, uas], function(err){
+            if( err ) throw err ;
+
+            uac.request({
+                uri: cfg.sipServer[1],
+                method: 'INVITE',
+                body: cfg.client[0].sdp,
+                headers: {
+                    Subject: self.test.fullTitle()
+                }
+            }, function( err, req ) {
+                should.not.exist(err) ;
+                req.on('response', function(res, ack){
+                    res.should.have.property('status',200);
+                    res.body.should.not.be.empty ;
+                    ack() ; 
+
+                    setTimeout( function() {
+                        //send reINVITE
+                        uac.request({
+                            uri: cfg.sipServer[1],
+                            method: 'INVITE',
+                            stackDialogId: res.stackDialogId,
+                            body: cfg.client[0].sdp,
+                            headers: {
+                                Subject: self.test.fullTitle() + ' reinvite'
+                            }
+                        }, function( err, req ) {
+                            res.should.have.property('status',200);
+                            
+
+                            req.on('response', function(res, ack){
+                                res.should.have.property('status',200);
+                                res.body.should.not.be.empty ;
+                                ack() ; 
+
+                                setTimeout( function(){
+                                    uac.request({
+                                        method: 'BYE',
+                                        stackDialogId: res.stackDialogId
+                                    }, function(err, bye){
+                                        should.not.exist(err) ;
+                                        bye.on('response', function(response){
+                                            response.should.have.property('status',200);
+                                            uac.idle.should.be.true ;
+                                            done() ;
+                                        }) ;
+                                    }) ;
+                                }, 1) ;
+
+                            }) ;
+                        }) ;
+                    }, 1) ;                    
+                }) ;
+            }) ;
+        }) ;
+    }) ;    
 }) ;
