@@ -1,0 +1,20 @@
+/**
+ * Meta-data describing a sip message
+ * @typedef {Object} Message~metaData
+ * @property {string} source - 'network' or 'application'; the source of the message
+ * @property {string} sourceAddress - the IP address of the sender of the request
+ * @property {number} sourcePort - the sending port of the sender of the request
+ * @property {string} protocol - 'udp', 'tcp', 'tls', 'ws'; the protocol used to transmit the message
+ * @property {string} protocol - 'udp', 'tcp', 'tls', 'ws'; the protocol used to transmit the message
+ * @property {Date}  time - the UTC time at which the message was sent or received by the sip stack on drachtio server
+ * @property {string} transactionId - a unique id for the SIP transaction
+ * @property {string} [dialogId] - a uniqe identifier for the SIP dialog to which this message belongs
+ */
+
+/**
+ * The components of a sip message
+ * @constructor Message
+ * @param {object} headers - SIP headers contained in the message
+ * @param {string} body - the body of the SIP message
+ */
+
