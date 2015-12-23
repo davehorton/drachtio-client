@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Home - Documentation</title>
+    <title>globals.jsdoc - Documentation</title>
 
     <script src="scripts/prettify/prettify.js"></script>
     <script src="scripts/prettify/lang-css.js"></script>
@@ -28,25 +28,39 @@
 
 <div id="main">
     
+    <h1 class="page-title">globals.jsdoc</h1>
+    
 
     
 
 
 
     
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Meta-data describing a sip message
+ * @typedef {Object} Message~metaData
+ * @property {string} source - 'network' or 'application'; the source of the message
+ * @property {string} sourceAddress - the IP address of the sender of the request
+ * @property {number} sourcePort - the sending port of the sender of the request
+ * @property {string} protocol - 'udp', 'tcp', 'tls', 'ws'; the protocol used to transmit the message
+ * @property {string} protocol - 'udp', 'tcp', 'tls', 'ws'; the protocol used to transmit the message
+ * @property {Date}  time - the UTC time at which the message was sent or received by the sip stack on drachtio server
+ * @property {string} transactionId - a unique id for the SIP transaction
+ * @property {string} [dialogId] - a uniqe identifier for the SIP dialog to which this message belongs
+ */
 
+/**
+ * The components of a sip message
+ * @typedef {Object} Message
+ * @property {object} headers - SIP headers contained in the message
+ * @property {string} body - the body of the SIP message
+ */
 
-
-
-
-
-
-
-
-    
-
-
-
+</code></pre>
+        </article>
+    </section>
 
 
 
