@@ -7,7 +7,7 @@ var fixture = require('drachtio-test-fixtures') ;
 var uac, proxy, uas ;
 var cfg = fixture(__dirname,[8040,8041,8042],[6040,6041,6042]) ;
 
-describe.only('cdr', function() {
+describe('cdr', function() {
     this.timeout(6000) ;
 
     before(function(done){

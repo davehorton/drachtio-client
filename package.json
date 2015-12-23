@@ -24,6 +24,7 @@
     "merge": "^1.1.3",
     "node-uuid": "^1.4.1",
     "only": "0.0.2",
+    "node-noop": "0.0.1",
     "sip-status": "~0.1.0"
   },
   "devDependencies": {
