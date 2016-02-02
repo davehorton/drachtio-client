@@ -1,6 +1,6 @@
 {
   "name": "drachtio-client",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "description": "low-level message exchange module for dracht.io",
   "main": "index.js",
   "scripts": {
